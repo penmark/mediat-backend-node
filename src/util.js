@@ -1,5 +1,4 @@
 const Promise = require('bluebird')
-const ObjectId = require('mongodb').ObjectId
 
 exports.wrap = (func) => {
     const cr = Promise.coroutine(func)

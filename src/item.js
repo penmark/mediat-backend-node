@@ -1,11 +1,11 @@
 const db = require('./db')
 const Promise = require('bluebird')
 const Router = require('express').Router
+const ObjectId = require('mongodb').ObjectId
 const util = require('./util')
 
 
 function* find(req, res, next) {
-    console.log('findAsync', req.jsonQuery)
     const items = yield db.collection('item').find(req.jsonQuery.get('query'))
         .project(req.jsonQuery.get('projection'))
         .sort(req.jsonQuery.get('sort'))
@@ -18,15 +18,14 @@ function* find(req, res, next) {
 function* findOne(req, res, next) {
     const item = yield db.collection('item')
         .findOne({_id: req._id}, req.jsonQuery.projection)
-        .then((err, item) => {
-            console.log('findOne', req._id, err, item)
+        .then(item => {
             if (!item) {
                 let err = new Error('Not found')
                 err.status = 404
-                next(err)
+                return next(err)
             }
+            res.send(item)
         })
-    res.send(item)
 }
 
 function* updateOne(req, res, next) {
@@ -35,9 +34,9 @@ function* updateOne(req, res, next) {
     res.send({ok: result.ok})
 }
 
-const item = Router()
+const router = Router()
 
-item.param('_id', (req, res, next, _id) => {
+router.param('_id', (req, res, next, _id) => {
     console.log('param', _id)
     try {
         req._id = ObjectId.createFromHexString(_id)
@@ -50,8 +49,8 @@ item.param('_id', (req, res, next, _id) => {
     next();
 })
 
-item.get('/', util.wrap(find))
-item.get('/:_id', util.wrap(findOne))
-item.put('/:_id', util.wrap(updateOne))
+router.get('/', util.wrap(find))
+router.get('/:_id', util.wrap(findOne))
+router.put('/:_id', util.wrap(updateOne))
 
-exports = item
+module.exports = router
