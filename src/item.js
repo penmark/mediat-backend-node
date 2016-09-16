@@ -37,12 +37,9 @@ function* updateOne(req, res, next) {
 const router = Router()
 
 router.param('_id', (req, res, next, _id) => {
-    console.log('param', _id)
     try {
         req._id = ObjectId.createFromHexString(_id)
-        console.log('param', req._id)
     } catch (err) {
-        console.error('objectId', err)
         err.status = 400
         next(err)
     }
