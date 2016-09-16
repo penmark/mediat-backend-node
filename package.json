@@ -1,0 +1,39 @@
+{
+  "name": "mediat",
+  "version": "0.0.1",
+  "description": "Mediat backend",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src",
+    "start": "node src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/penmark/mediat-node-backend.git"
+  },
+  "keywords": [
+    "Express",
+    "MongoDB",
+    "Mediat",
+    "media",
+    "video",
+    "audio",
+    "MAM"
+  ],
+  "author": "Pontus Enmark <pontus@wka.se>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/penmark/mediat-node-backend/issues"
+  },
+  "homepage": "https://github.com/penmark/mediat-node-backend#readme",
+  "dependencies": {
+    "bluebird": "^3.4.6",
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "mongodb": "^2.2.10",
+    "morgan": "^1.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.9.2"
+  }
+}
