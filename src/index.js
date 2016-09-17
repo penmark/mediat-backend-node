@@ -9,8 +9,7 @@ const WsServer = require('ws').Server
 
 const port = +process.env.PORT || 3000;
 const production = process.env.NODE_ENV === 'production'
-const host4 = production ? 'localhost' : '0.0.0.0'
-const host6 = production ? '::1' : '::'
+const host = production ? '::1' : '::'
 
 const app = express();
 const server = Server(app);
@@ -24,17 +23,10 @@ app.use(morgan('dev'))
 
 app.use('/item', item)
 
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html')
-})
-
 db.connect('mongodb://localhost:27017/media')
   .then(db => {
-    /*server.listen(port, host4, () => {
-      console.log(`Listening on ${host4}:${port}`)
-    })*/
-    server.listen(port, host6, () => {
-      console.log(`Listening on ${host6}:${port}`)
+    server.listen(port, host, () => {
+      console.log(`Listening on ${host}:${port}`)
     })
   })
   .catch(err => {

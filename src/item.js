@@ -18,20 +18,31 @@ function* find(req, res, next) {
 function* findOne(req, res, next) {
   const item = yield db.collection('item')
     .findOne({_id: req._id}, req.jsonQuery.projection)
-    .then(item => {
-      if (!item) {
-        let err = new Error('Not found')
-        err.status = 404
-        return next(err)
-      }
-      res.send(item)
-    })
+
+  if (!item) {
+    const err = new Error('Not found')
+    err.status = 404
+    throw err
+  }
+  res.send(item)
 }
 
 function* updateOne(req, res, next) {
   const item = yield db.collection('item')
     .updateOne({_id: req._id}, req.jsonQuery.update)
   res.send({ok: result.ok})
+}
+
+function* thumb(req, res, next) {
+  const image = yield db.collection('item')
+    .findOne({_id: req._id}, {mimetype: 1, cover_data: 1, 'thumbs.small': 1})
+    .then(item => {
+      if (item.mimetype.startsWith('video')) {
+        return item.thumbs.small.buffer
+      }
+      return item.cover_data.buffer
+    })
+  res.send(image)
 }
 
 const router = Router()
@@ -49,5 +60,6 @@ router.param('_id', (req, res, next, _id) => {
 router.get('/', util.wrap(find))
 router.get('/:_id', util.wrap(findOne))
 router.put('/:_id', util.wrap(updateOne))
+router.get('/thumb/:_id', util.wrap(thumb))
 
 module.exports = router
