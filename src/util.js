@@ -23,13 +23,13 @@ exports.jsonQuery = () => {
 }
 
 exports.errorHandler = () => {
-  return (err, req, res, next) => {
-    console.error('err', err)
+  return (error, req, res, next) => {
+    console.error('err', error)
     if (res.headersSent) {
-      console.log('headersSent')
-      return next(err);
+      return next(error);
     }
-    res.status(err.status || 500).send({message: err.message, error: err})
+    res.status(error.status || 500)
+      .send({message: error.message, error})
   }
 }
 

@@ -4,15 +4,17 @@ const state = {
   db: null
 }
 
-exports.connect = (url, done) => {
-  if (state.db) return done()
-
-  MongoClient.connect(url, (err, db) => {
-    if (err) return done(err)
-    state.db = db
-    done()
-  })
+exports.connect = (url) => {
+  if (state.db) {
+    return new Promise((resolve) => {
+      resolve(state.db)
+    })
+  }
+  return MongoClient
+    .connect(url)
+    .then(db => state.db = db)
 }
+
 
 exports.collection = (collection) => {
   return state.db.collection(collection)
@@ -27,13 +29,8 @@ exports.close = (done) => {
   }
 }
 
-exports.createIndexes = (collection, indexes, done) => {
-  state.db.collection(collection)
-    .createIndexes(indexes, {background: true}, (err) => {
-      if (err) {
-        return done(err)
-      }
-      done()
-    })
 
+exports.createIndexesA = (collection, indexes) => {
+  return state.db.collection(collection)
+    .createIndexes(indexes)
 }

@@ -1,12 +1,20 @@
-const express = require('express')
-const morgan = require('morgan')
 const bodyParser = require('body-parser')
+const express = require('express')
+const Server = require('http').Server
+const morgan = require('morgan')
 const db = require('./db')
 const item = require('./item')
 const util = require('./util')
+const WsServer = require('ws').Server
 
+const port = +process.env.PORT || 3000;
+const production = process.env.NODE_ENV === 'production'
+const host4 = production ? 'localhost' : '0.0.0.0'
+const host6 = production ? '::1' : '::'
 
 const app = express();
+const server = Server(app);
+const wss = new WsServer({server})
 
 app.use(morgan('dev'))
   .use(bodyParser.urlencoded({extended: true}))
@@ -16,18 +24,30 @@ app.use(morgan('dev'))
 
 app.use('/item', item)
 
-db.connect('mongodb://localhost:27017/media', (err) => {
-  if (err) {
-    console.log('Unable to connect to Mongo.')
-    process.exit(1)
-  }
-  db.createIndexes('item', {title: 1, modified: -1}, (err) => {
-    if (err) {
-      console.log('Unable to create indexes', err)
-      process.exit(2)
-    }
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html')
+})
+
+db.connect('mongodb://localhost:27017/media')
+  .then(db => {
+    /*server.listen(port, host4, () => {
+      console.log(`Listening on ${host4}:${port}`)
+    })*/
+    server.listen(port, host6, () => {
+      console.log(`Listening on ${host6}:${port}`)
+    })
   })
-  app.listen(3000, () => {
-    console.log('Listening on port 3000...')
+  .catch(err => {
+    console.log('Unable to connect to Mongo:', err)
+    process.exit(1)
+  })
+
+wss.on('connection', (ws) => {
+
+  ws.send(JSON.stringify({message: 'hello'}))
+
+  ws.on('message', (msg) => {
+    const message = JSON.parse(msg)
+    console.log('message', message)
   })
 })
