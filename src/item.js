@@ -4,6 +4,8 @@ const Router = require('express').Router
 const ObjectId = require('mongodb').ObjectId
 const util = require('./util')
 
+const notFound = new Error('Not found')
+notFound.status = 404
 
 function* find(req, res, next) {
   const items = yield db.collection('item').find(req.jsonQuery.get('query'))
@@ -20,9 +22,7 @@ function* findOne(req, res, next) {
     .findOne({_id: req._id}, req.jsonQuery.projection)
 
   if (!item) {
-    const err = new Error('Not found')
-    err.status = 404
-    throw err
+    throw notFound
   }
   res.send(item)
 }
@@ -37,11 +37,20 @@ function* thumb(req, res, next) {
   const image = yield db.collection('item')
     .findOne({_id: req._id}, {mimetype: 1, cover_data: 1, 'thumbs.small': 1})
     .then(item => {
-      if (item.mimetype.startsWith('video')) {
+      if (!item) {
+        throw notFound
+      }
+      if (item.thumbs) {
         return item.thumbs.small.buffer
       }
-      return item.cover_data.buffer
+      if (item.cover_data) {
+        return item.cover_data.buffer
+      }
+      return undefined
     })
+  if (!image) {
+    res.status(204)
+  }
   res.send(image)
 }
 
