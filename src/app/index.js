@@ -23,7 +23,15 @@ class App {
 
   transcodeProgress(msg) {
     const data = JSON.parse(msg.content)
-    this.wsBroadcast(data)
+    const message = {
+      type: 'progress',
+      payload: {
+        progress: data.progress,
+        _id: data._id,
+        user: data.user
+      }
+    }
+    this.wsBroadcast(message)
   }
 
   wsBroadcast(msg) {

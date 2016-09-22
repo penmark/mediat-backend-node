@@ -19,6 +19,7 @@ class Worker {
 
   handleTranscode(msg) {
     const info = JSON.parse(msg.content)
+    this.log.info('handle transcode', info)
     const transcoder = ffmpeg.transcode(info.infile, info.outfile)
     transcoder.on('progress', (progress) => {
       const message = {progress: progress, info}
@@ -39,6 +40,7 @@ class Worker {
 
   handleIngest(msg) {
     const info = JSON.parse(msg.content)
+    this.log.info('handle ingest', info)
     const ingest = spawn(this.config.ingest, ['-d', this.config.mongoUrl, '-c', 'item', info.outfile])
     ingest.on('exit', code => {
       info.success = code === 0
