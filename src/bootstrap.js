@@ -1,6 +1,6 @@
 const EventEmitter = require('events')
 const MongoClient = require('mongodb').MongoClient
-const amqp = require('amqplib')
+const jackrabbit = require('jackrabbit')
 const Promise = require('bluebird')
 const winston = require('winston')
 const config = require('./config')
@@ -21,13 +21,10 @@ const connectMongo = () => {
 }
 
 const connectAmqp = () => {
-  return amqp.connect(config.amqpUrl)
-    .then(conn => conn.createChannel())
-    .then(ch => {
-      ch.assertExchange(config.exchange, 'direct', {durable: false})
-      return ch
-    })
-    .catch(EventBus.abort)
+  const rabbit = jackrabbit(config.amqpUrl)
+    .on('error', EventBus.abort)
+  const exchange = rabbit.direct('mediat')
+  return {rabbit, exchange}
 }
 
 /**
@@ -37,8 +34,8 @@ const connectAmqp = () => {
 const bootstrap = () => {
   return Promise.coroutine(function* () {
     const db = yield connectMongo()
-    const channel = yield connectAmqp()
-    return { db, channel, bus, config, abort: EventBus.abort, log: winston }
+    const {rabbit, exchange} = connectAmqp()
+    return { db, rabbit, exchange, bus, config, abort: EventBus.abort, log: winston }
   })().catch(EventBus.abort)
 }
 

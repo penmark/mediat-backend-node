@@ -3,50 +3,54 @@ const App = require('../app')
 const ffmpeg = require('./ffmpeg')
 const spawn = require('child_process').spawn
 const bootstrap = require('../bootstrap')
+const rx = require('rxjs/Rx')
 
 class Worker {
   constructor(deps) {
     this.app = new App(deps)
     this.config = deps.config
-    this.channel = deps.channel
     this.log = deps.log
-    this.app.bindQueue('transcode')
-      .then(q => this.channel.consume(q.queue, this.handleTranscode.bind(this), {noAck: false}))
-    this.app.bindQueue('ingest')
-      .then(q => this.channel.consume(q.queue, this.handleIngest.bind(this), {noAck: false}))
-    deps.log.info('Worker listening on transcode and ingest queues')
+    this.ingestQueue = deps.exchange.queue({name: 'ingest', key: 'ingest'})
+    this.ingestQueue.consume(this.handleIngest.bind(this), {noAck: false})
+    this.transcodeQueue = deps.exchange.queue({name: 'transcode', key: 'transcode'})
+    this.transcodeQueue.consume(this.handleTranscode.bind(this), {noAck: false})
   }
 
-  handleTranscode(msg) {
-    const info = JSON.parse(msg.content)
+  handleTranscode(msg, ack, nack) {
+    const info = msg
     this.log.info('handle transcode', info)
     const transcoder = ffmpeg.transcode(info.infile, info.outfile)
-    transcoder.on('progress', (progress) => {
-      const message = {progress: progress, info}
-      this.app.publish('transcode.progress', message)
-    })
+    const subscription = rx.Observable.fromEvent(transcoder, 'progress')
+      .debounceTime(500)
+      .subscribe(progress => {
+        const message = {progress: progress, info}
+        this.app.publish('transcode.progress', message)
+      })
     transcoder.on('exit', code => {
       info.success = code === 0
-      this.log.info('Transcode', info)
+      this.log.info('transcode done', info)
       if (info.success) {
         this.app.ingest(info)
       }
-      this.app.ack(msg)
+      ack()
+      subscription.unsubscribe()
     })
     transcoder.on('error', err => {
-      this.log.warn('Transcode', err)
+      this.log.warn('transcode', err)
     })
   }
 
-  handleIngest(msg) {
-    const info = JSON.parse(msg.content)
+  handleIngest(msg, ack, nack) {
+    const info = msg
     this.log.info('handle ingest', info)
     const ingest = spawn(this.config.ingest, ['-d', this.config.mongoUrl, '-c', 'item', info.outfile])
+    ingest.stderr.on('data', data => this.log.warn('ingest', data.toString()))
+    ingest.stdout.on('data', data => this.log.info('ingest', data.toString()))
     ingest.on('exit', code => {
       info.success = code === 0
-      this.log.info('ingest', info)
+      this.log.info('ingest done', info)
       this.app.publish('ingest.progress', info)
-      this.app.ack(msg)
+      info.success ? ack() : nack()
     })
   }
 }

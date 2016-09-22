@@ -6,32 +6,13 @@ class App {
     this.channel = deps.channel
     this.bus = deps.bus
     this.wss = deps.wss
-    this.exchange = deps.config.exchange
-    this.bindQueue('transcode.progress')
-      .then(q => this.channel.consume(q.queue, this.transcodeProgress.bind(this), {noAck: true}))
-    this.bindQueue('ingest.progress')
-      .then(q => this.channel.consume(q.queue, this.ingestProgress.bind(this), {noAck: true}))
+    this.exchange = deps.exchange
+    this.log = deps.log
+
   }
 
-  bindQueue(name) {
-    return this.channel.assertQueue(name)
-      .then(q => this.channel.bindQueue(q.queue, this.exchange, name))
-  }
   transcode(msg) {
     this.publish('transcode', msg)
-  }
-
-  transcodeProgress(msg) {
-    const data = JSON.parse(msg.content)
-    const message = {
-      type: 'progress',
-      payload: {
-        progress: data.progress,
-        _id: data._id,
-        user: data.user
-      }
-    }
-    this.wsBroadcast(message)
   }
 
   wsBroadcast(msg) {
@@ -42,17 +23,8 @@ class App {
     this.publish('ingest', msg)
   }
 
-  ingestProgress(msg) {
-    const data = JSON.parse(msg.content)
-    this.wsBroadcast(data)
-  }
-
-  publish(queue, msg) {
-    this.channel.publish(this.exchange, queue, Buffer.from(JSON.stringify(msg)))
-  }
-
-  ack(msg) {
-    this.channel.ack(msg)
+  publish(key, msg) {
+    this.exchange.publish(msg, {key})
   }
 
   get item() {

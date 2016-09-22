@@ -20,6 +20,33 @@ class Server {
     this.bus.on('abort', this.shutdown.bind(this))
     this.bus.on('wsBroadcast', this.wsBroadcast.bind(this))
     this.server.listen(deps.config.port, deps.config.host, this.onListen.bind(this))
+    this.ingestQueue = this.app.exchange.queue({name: 'ingest.progress', key: 'ingest.progress'})
+    this.ingestQueue.consume(this.ingestProgress.bind(this), {noAck: true})
+    this.transcodeQueue = this.app.exchange.queue({name: 'transcode.progress', key: 'transcode.progress'})
+    this.transcodeQueue.consume(this.transcodeProgress.bind(this), {noAck: true})
+  }
+
+  transcodeProgress(msg) {
+    const message = {
+      type: 'progress',
+      payload: {
+        progress: msg.progress,
+        _id: msg._id,
+        user: msg.user
+      }
+    }
+    this.wsBroadcast(message)
+  }
+
+  ingestProgress(msg) {
+    const message = {
+      type: 'ingest',
+      payload: {
+        original_id: msg._id,
+        user: msg.user
+      }
+    }
+    this.wsBroadcast(message)
   }
 
   shutdown() {
