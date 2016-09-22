@@ -1,2 +1,2 @@
-server: nodemon src/server.js
+server: nodemon src/server
 worker: nodemon src/worker

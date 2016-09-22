@@ -7,7 +7,6 @@ const errors = require('../../errors')
 module.exports = (app) => {
 
   function* find(req, res) {
-
     const items = yield app.item.find(
       req.jsonQuery.get('query'),
       req.jsonQuery.get('projection'),
@@ -18,7 +17,6 @@ module.exports = (app) => {
   }
 
   function* findOne(req, res) {
-
     const item = yield app.item
       .byId(req._id, req.jsonQuery.get('projection'))
     if (!item) {
@@ -28,8 +26,11 @@ module.exports = (app) => {
   }
 
   function* updateOne(req, res) {
+    const update = req.jsonQuery.get('update')
+    update.updated_by = req.user
+    update.modified = {$currentDate: true}
     const result = yield app.item
-      .updateOne(req._id, req.jsonQuery.get('update'))
+      .updateOne(req._id, update)
     res.send({ok: result.ok})
   }
 
@@ -37,6 +38,9 @@ module.exports = (app) => {
     const image = yield app.item
       .byId(req._id, {mimetype: 1, cover_data: 1, 'thumbs.small': 1})
       .then(item => {
+        if (!item) {
+          throw new errors.ItemNotFound()
+        }
         if (item.thumbs) {
           return item.thumbs.small.buffer
         }
@@ -49,13 +53,14 @@ module.exports = (app) => {
     res.send(image)
   }
 
-  function* transcode(req, res, next) {
+  function* transcode(req, res) {
     const item = yield app.item.byId(req._id)
     const message = {
       infile: item.complete_name,
       outfile: `${app.config.transcodeDir}/${item.file_name}.mp4`,
       title: req.query.title || item.movie_name || item.file_name,
-      _id: req._id
+      _id: item._id,
+      user: req.user
     }
     app.transcode(message)
     res.send({transcode: message})

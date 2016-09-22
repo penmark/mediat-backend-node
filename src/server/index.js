@@ -1,9 +1,9 @@
-const bootstrap = require('./bootstrap')
+const bootstrap = require('../bootstrap')
 const http = require('http')
 const ws = require('ws')
 const throng = require('throng')
-const App = require('./app')
-const web = require('./web')
+const App = require('../app')
+const web = require('../web')
 
 class Server {
   constructor(deps) {
@@ -36,12 +36,12 @@ class Server {
   }
 
   onListen() {
-    this.log.info(`Listening on ${config.host}:${config.port}`)
+    this.log.info(`Listening on ${this.app.config.host}:${this.app.config.port}`)
   }
 }
 
 const start = () => {
   bootstrap().then(deps => new Server(deps))
 }
-const config = require('./config')
+const config = require('../config')
 throng(config.numservers, start)

@@ -14,6 +14,7 @@ class Worker {
       .then(q => this.channel.consume(q.queue, this.handleTranscode.bind(this), {noAck: false}))
     this.app.bindQueue('ingest')
       .then(q => this.channel.consume(q.queue, this.handleIngest.bind(this), {noAck: false}))
+    deps.log.info('Worker listening on transcode and ingest queues')
   }
 
   handleTranscode(msg) {
@@ -43,8 +44,8 @@ class Worker {
       info.success = code === 0
       this.log.info('ingest', info)
       this.app.publish('ingest.progress', info)
+      this.app.ack(msg)
     })
-    this.app.ack(msg)
   }
 }
 
