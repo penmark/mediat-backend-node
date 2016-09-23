@@ -27,26 +27,14 @@ class Server {
   }
 
   transcodeProgress(msg) {
-    const message = {
-      type: 'progress',
-      payload: {
-        progress: msg.progress,
-        _id: msg._id,
-        user: msg.user
-      }
-    }
-    this.wsBroadcast(message)
+    this.log.info('broadcasting', msg)
+    this.wsBroadcast(msg)
   }
 
   ingestProgress(msg) {
-    const message = {
-      type: 'ingest',
-      payload: {
-        original_id: msg._id,
-        user: msg.user
-      }
-    }
-    this.wsBroadcast(message)
+    // Look up new item and add to payload?
+    this.log.info('broadcasting', msg)
+    this.wsBroadcast(msg)
   }
 
   shutdown() {

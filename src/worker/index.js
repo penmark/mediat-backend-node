@@ -17,20 +17,19 @@ class Worker {
   }
 
   handleTranscode(msg, ack, nack) {
-    const info = msg
-    this.log.info('handle transcode', info)
-    const transcoder = ffmpeg.transcode(info.infile, info.outfile)
+    this.log.info('handle transcode', msg)
+    const transcoder = ffmpeg.transcode(msg.infile, msg.outfile)
     const subscription = rx.Observable.fromEvent(transcoder, 'progress')
       .debounceTime(500)
-      .subscribe(progress => {
-        const message = {progress: progress, info}
+      .map(progress => ({type: 'progress', payload: {progress, _id: msg._id, user: msg.user}}))
+      .subscribe(message => {
         this.app.publish('transcode.progress', message)
       })
     transcoder.on('exit', code => {
-      info.success = code === 0
-      this.log.info('transcode done', info)
-      if (info.success) {
-        this.app.ingest(info)
+      msg.success = code === 0
+      this.log.info('transcode done', msg)
+      if (msg.success) {
+        this.app.ingest(msg)
       }
       ack()
       subscription.unsubscribe()
@@ -41,16 +40,19 @@ class Worker {
   }
 
   handleIngest(msg, ack, nack) {
-    const info = msg
-    this.log.info('handle ingest', info)
-    const ingest = spawn(this.config.ingest, ['-d', this.config.mongoUrl, '-c', 'item', info.outfile])
+    this.log.info('handle ingest', msg)
+    const ingest = spawn(this.config.ingest, ['-d', this.config.mongoUrl, '-c', 'item', msg.outfile])
     ingest.stderr.on('data', data => this.log.warn('ingest', data.toString()))
     ingest.stdout.on('data', data => this.log.info('ingest', data.toString()))
     ingest.on('exit', code => {
-      info.success = code === 0
-      this.log.info('ingest done', info)
-      this.app.publish('ingest.progress', info)
-      info.success ? ack() : nack()
+      msg.success = code === 0
+      this.log.info('ingest done', msg)
+      const message = {
+        type: 'ingest',
+        payload: {success: msg.success, original_id: msg._id, user: msg.user}
+      }
+      this.app.publish('ingest.progress', message)
+      msg.success ? ack() : nack()
     })
   }
 }
