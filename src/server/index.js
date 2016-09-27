@@ -27,12 +27,10 @@ class Server {
   }
 
   transcodeProgress(msg) {
-    this.log.info('broadcasting', msg)
     this.wsBroadcast(msg)
   }
 
   ingestProgress(msg) {
-    // Look up new item and add to payload?
     this.log.info('broadcasting', msg)
     this.wsBroadcast(msg)
   }
