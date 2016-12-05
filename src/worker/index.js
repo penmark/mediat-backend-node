@@ -41,7 +41,7 @@ class Worker {
 
   handleIngest(msg, ack, nack) {
     this.log.info('handle ingest', msg)
-    const ingest = spawn(this.config.ingest, ['-d', this.config.mongoUrl, '-c', 'item', msg.outfile])
+    const ingest = spawn(this.config.ingest, ['-d', this.config.mongoUrl, '-c', 'asset', msg.outfile])
     ingest.stderr.on('data', data => this.log.warn('ingest', data.toString()))
     ingest.stdout.on('data', data => this.log.info('ingest', data.toString()))
     ingest.on('exit', code => {

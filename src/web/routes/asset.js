@@ -7,45 +7,45 @@ const errors = require('../../errors')
 module.exports = (app) => {
 
   function* find(req, res) {
-    const items = yield app.item.find(
+    const asset = yield app.asset.find(
       req.jsonQuery.get('query'),
       req.jsonQuery.get('projection'),
       req.jsonQuery.get('sort'),
       req.jsonQuery.get('limit'),
       req.jsonQuery.get('skip')).toArray()
-    res.send(items)
+    res.send(asset)
   }
 
   function* findOne(req, res) {
-    const item = yield app.item
+    const asset = yield app.asset
       .byId(req._id, req.jsonQuery.get('projection'))
-    if (!item) {
-      throw new errors.ItemNotFound()
+    if (!asset) {
+      throw new errors.AssetNotFound()
     }
-    res.send(item)
+    res.send(asset)
   }
 
   function* updateOne(req, res) {
     const update = req.jsonQuery.get('update')
     update.updated_by = req.user
     update.modified = {$currentDate: true}
-    const result = yield app.item
+    const result = yield app.asset
       .updateOne(req._id, update)
     res.send({ok: result.ok})
   }
 
   function* thumb(req, res) {
-    const image = yield app.item
+    const image = yield app.asset
       .byId(req._id, {mimetype: 1, cover_data: 1, 'thumbs.small': 1})
-      .then(item => {
-        if (!item) {
-          throw new errors.ItemNotFound()
+      .then(asset => {
+        if (!asset) {
+          throw new errors.AssetNotFound()
         }
-        if (item.thumbs) {
-          return item.thumbs.small.buffer
+        if (asset.thumbs) {
+          return asset.thumbs.small.buffer
         }
-        if (item.cover_data) {
-          return item.cover_data.buffer
+        if (asset.cover_data) {
+          return asset.cover_data.buffer
         }
         res.status(204)
         return undefined
@@ -54,12 +54,12 @@ module.exports = (app) => {
   }
 
   function* transcode(req, res) {
-    const item = yield app.item.byId(req._id)
+    const asset = yield app.asset.byId(req._id)
     const message = {
-      infile: item.complete_name,
-      outfile: `${app.config.transcodeDir}/${item.file_name}.mp4`,
-      title: req.query.title || item.movie_name || item.file_name,
-      _id: item._id,
+      infile: asset.complete_name,
+      outfile: `${app.config.transcodeDir}/${asset.file_name}.mp4`,
+      title: req.query.title || asset.movie_name || asset.file_name,
+      _id: asset._id,
       user: req.user
     }
     app.transcode(message)

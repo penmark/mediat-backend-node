@@ -13,7 +13,7 @@ class Server {
     this.log = deps.log
     this.wss = new ws.Server({server: this.server})
     this.wss.on('connection', (conn) => {
-      conn.send(JSON.stringify({message: 'Hello'}))
+      conn.send(JSON.stringify({type: 'MESSAGE', payload: {message: 'Hello'}}))
     })
     process.once('SIGTERM', () => this.shutdown())
     this.bus.removeListener('abort', deps.abort)

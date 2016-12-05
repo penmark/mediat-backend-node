@@ -9,5 +9,6 @@ module.exports = {
   uploadDir: process.env.UPLOAD_DIR || '/tmp',
   transcodeDir: process.env.TRANSCODE_DIR || '/tmp/transcode',
   ingest: process.env.INGEST || 'ingest',
-  exchange: 'mediat'
+  exchange: 'mediat',
+  'static': process.env.STATIC || 'static'
 }

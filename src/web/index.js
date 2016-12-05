@@ -1,7 +1,7 @@
 const bodyParser = require('body-parser')
 const express = require('express')
 const morgan = require('morgan')
-const item = require('./routes/item')
+const asset = require('./routes/asset')
 const auth = require('./routes/auth')
 const util = require('../util')
 
@@ -43,9 +43,10 @@ module.exports = (app) => {
     .use(morgan('dev'))
     .use(bodyParser.urlencoded({extended: true}))
     .use(bodyParser.json())
+    .use(express.static(app.config.static))
     .use(jsonQuery())
     .use(remoteUser())
-    .use('/item', item(app))
+    .use('/asset', asset(app))
     .use('/auth', auth(app))
     .use(jsonError(app))
   if (!app.config.production) {

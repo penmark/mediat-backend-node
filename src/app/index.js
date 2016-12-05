@@ -27,11 +27,11 @@ class App {
     this.exchange.publish(msg, {key})
   }
 
-  get item() {
-    if (!this._item) {
-      this._item = require('./item')(this.db)
+  get asset() {
+    if (!this._asset) {
+      this._asset = require('./asset')(this.db)
     }
-    return this._item
+    return this._asset
   }
 }
 

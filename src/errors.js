@@ -1,3 +1,3 @@
-class ItemNotFound extends Error {}
+class AssetNotFound extends Error {}
 
-exports = {ItemNotFound}
+exports = {AssetNotFound}
