@@ -4,7 +4,7 @@ const morgan = require('morgan')
 const asset = require('./routes/asset')
 const auth = require('./routes/auth')
 const util = require('../util')
-
+const cors = require('cors')
 
 const jsonQuery = () => {
   return (req, res, next) => {
@@ -39,8 +39,9 @@ const remoteUser = () => {
 }
 
 module.exports = (app) => {
-  const web = express()
+  return express()
     .use(morgan('dev'))
+    .use(cors())
     .use(bodyParser.urlencoded({extended: true}))
     .use(bodyParser.json())
     .use(express.static(app.config.static))
@@ -49,8 +50,5 @@ module.exports = (app) => {
     .use('/asset', asset(app))
     .use('/auth', auth(app))
     .use(jsonError(app))
-  if (!app.config.production) {
-    web.use(require('cors')())
-  }
-  return web
+
 }
