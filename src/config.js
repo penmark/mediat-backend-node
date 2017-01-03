@@ -1,5 +1,7 @@
 module.exports = {
   mongoUrl: process.env.MONGO_URL || 'mongodb://localhost/media',
+  mongoCa: process.env.MONGO_CA,
+  mongoCert: process.env.MONGO_CERT,
   amqpUrl: process.env.AMQP_URL || 'amqp://localhost',
   port: process.env.PORT || 3000,
   host: process.env.HOST || '::1',

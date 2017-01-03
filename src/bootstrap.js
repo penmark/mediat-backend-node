@@ -4,6 +4,7 @@ const jackrabbit = require('jackrabbit')
 const Promise = require('bluebird')
 const winston = require('winston')
 const config = require('./config')
+const fs = require('fs')
 
 class EventBus extends EventEmitter {
   static abort(err) {
@@ -16,7 +17,13 @@ const bus = new EventBus()
 bus.on('abort', EventBus.abort)
 
 const connectMongo = () => {
-  return MongoClient.connect(config.mongoUrl)
+  return MongoClient.connect(config.mongoUrl, {
+    server: {
+      sslCa: fs.readFileSync(config.mongoCa),
+      sslKey: fs.readFileSync(config.mongoCert),
+      sslCert: fs.readFileSync(config.mongoCert)
+    }
+  })
     .catch(EventBus.abort)
 }
 
